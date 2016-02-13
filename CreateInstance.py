@@ -24,7 +24,7 @@
 
 import os
 import sys
-import time
+from time import sleep
 
 import boto.ec2
 
@@ -109,17 +109,43 @@ class CreateInstance(object):
         
         # Returns class boto.ec2.instance.Reservation object
         # http://boto.cloudhackers.com/en/latest/ref/ec2.html#boto.ec2.instance.Reservation
-        self.instance_id = self.conn.run_instances(image_id=self.ami, 
+        self.reservation_id = self.conn.run_instances(image_id=self.ami, 
                                                         key_name=self.key_pair, 
                                                         security_groups=[self.security_group],
                                                         instance_type=self.instance_type,
                                                         user_data=self._inject_user_data()
                                                         )
         
-        # Add name tag
-        #boto.ec2.ec2object.TaggedEC2Object(self.conn).add_tag('Name', 
-        #                                                     self.ec2_tag_Name)
-                
+        self.instance_id = self.reservation_id.instances[0].id
+        
+        
+        self._tag_instance()
+        
+    def _tag_instance(self):
+        '''
+        Added code to properly tag instances upon launching.
+        '''
+        reservations = self.conn.get_all_reservations()
+        for res in reservations:
+            instance = res.instances.pop() # list of instances by EC2 ID
+            # check instance_id against run_instances output
+            if instance.id == self.instance_id:
+                print "Provisioning '%s' EC2 Instance ID: '%s' in '%s', "\
+                      "named '%s'...\n" % (str(instance.instance_type), 
+                                          str(instance.id),
+                                          str(instance.region.name), 
+                                          str(self.ec2_tag_Name))
+                print "Waiting for instance to come up..."
+                while (instance.state != u'running') and \
+                      (instance.state != u'pending'):
+                    print "."
+                    sleep(1)
+                    #check to see if pending or running to add name tag.
+                    instance.update()
+                    
+                instance.add_tag('Name', self.ec2_tag_Name)
+                    
+                      
     def get_tag_name(self):
         return self.ec2_tag_Name
     
@@ -156,5 +182,5 @@ if __name__ == "__main__":
                               Type='t2.micro', AMI='ami-20d3fc4a',
                               key_pair='brian-test',
                               security_group='webserver-with-ssh')
-    # Call the CreateInstance->run() function to kick everything off.
+    # Call the CreateInstance.run() function to kick everything off.
     instance.run()
