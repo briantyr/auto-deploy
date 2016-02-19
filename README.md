@@ -1,8 +1,7 @@
-# auto provision, deploy, and configure Webserver EC2 instance in AWS
+auto provision, deploy, and configure Webserver EC2 instance in AWS
+================
 
-# https://github.com/briantyr/auto-deploy
--------------------------------------------------------------------------------
-*** Description ***
+** Description **
 A small DevOps demonstration in provisioning a single AWS resource (EC2 instance)
 and install, configure, enable a static page, and restart Nginx so that it 
 listens on port 80, and displays a simple HTML page with a specific message.
@@ -27,7 +26,7 @@ code coverage unit tests to verify my functional code and expected results, but
 I can also write my own infrastructure tests with one of the many Python
 testing frameworks.
 
-*** Recommended Requirements ***
+*** Required Requirements ***
 - Python 2.7.x
   * Support for standard library string.Template backport from Python 3.x)
   * Tested in Python 2.7.10 and 2.7.11
@@ -39,8 +38,7 @@ testing frameworks.
     script on in order to install the virtualenv packages.
 
 *** Recommended Pre-Requisites***
-As user with sudo, use pip to install 'virtualenv' and 'virtualenvwrapper' packages.
-I installed boto under a Python virtual environment to keep the applications packages separated from my system Python packages.  You can do this by executing 'sudo pip install virtualenv' and then create the virtualenv with which you can install boto in.
+As user with sudo, use pip to install 'virtualenv' and 'virtualenvwrapper' packages.  'virtualenvwrapper' provides some convienient methods to make creating a virtualenv much faster.
 
 You will also need to configure your users' ~/.boto file (create it if it does not exist to match your AWS environment's keys.
 If you do not have a key;acess)
