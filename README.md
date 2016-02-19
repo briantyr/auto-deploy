@@ -1,12 +1,11 @@
-auto provision, deploy, and configure Webserver EC2 instance in AWS
-================
+##auto provision, deploy, and configure Webserver EC2 instance in AWS
 
 ** Description **
 A small DevOps demonstration in provisioning a single AWS resource (EC2 instance)
 and install, configure, enable a static page, and restart Nginx so that it 
 listens on port 80, and displays a simple HTML page with a specific message.
 
-*** Implementation Overview ***
+** Implementation Overview **
 I decided to write this little project completely in Python and use the official 
 AWS API's instead of using familiar tools such as Terraform, Ansible, and Puppet
 because I really wanted to dive deep into not only building my own infrastructure and 
