@@ -111,27 +111,38 @@ El Capitan has some problems with the Python 'six' module when installing virtua
 **Now on both OS X or Ubuntu (and probably Windows), finish the installation**
 
     **AS YOUR REGULAR USER**
+    
     cd ~/
     git clone https://github.com/briantyr/auto-deploy.git
     cd auto-deploy
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bash_profile
     source ~/.bash_profile
-    **_Now you should have access to new shell functions, such as mvirtualenv, workon, etc.  We're going to create a unique virtualenv using one of the virtualenvwrapper helper funcitons to make a new virtualenv and use our packages in requirement.txt to install to it._**
-    mkvirtualenv -r requirements.txt auto-deploy **(Names your virtualenv auto-deploy in ~/.virtualenv/auto-deploy ... rename as you feel necessary)**
-    **At this point, it should drop you into the auto-deploy virtualenv and you should only have the minimum installed packages you require for this program to work.
-    **You no longer neee sudo access and can run everything out of the cloend git repo.**
-    Ensure you're working on the 'auto-deploy' virtualenv: **workon auto-deploy**
-    Type: **pip list** and you should receive onyl a mimimal amount of packages back, including boto, that looks something like below.  If so, are good to execute the Python code.
+
+_**Now you should have access to new shell functions, such as mvirtualenv, workon, etc.  We're going to create a unique virtualenv using one of the virtualenvwrapper helper functions to make a new virtualenv and use our packages in requirement.txt to install to it.**_
+
+    mkvirtualenv -r requirements.txt auto-deploy
+
+**(Names your virtualenv auto-deploy in ~/.virtualenv/auto-deploy ... rename as you feel necessary in your mkvirtualenv call)**
+
+**At this point, it should drop you into the auto-deploy virtualenv and you should only have the minimum installed packages you require for this program to work.**
+
+**You no longer need sudo access and can run everything out of the cloned git repo.**
+Ensure you're working on the 'auto-deploy' virtualenv:
+
+    workon auto-deploy
+
+Type: **pip list** and you should receive onyl a mimimal amount of packages back, including boto, that looks something like below.  If so, are good to execute the Python code in CreateInstance.py, but you may want to change the keyword arguments athe botttom.
+
     (auto-deploy) dev:stelli-project btaylor$ pip list
     boto (2.39.0)
     pip (8.0.2)
     setuptools (20.0)
     wheel (0.29.0)
-    
     chmod +x CreateInstance.py
     (modify CreateInstance.py run arguments)
     ./CreateInstance.py
+    
+#### **More to come on installation, newer code, and running later.  Contact me if anything is broken.**
 
-**#### More to come on installation, newer code, and running later.  Contact me if anything is broken.**
+**In the meantime, feel free to open CreateInstance.py and change the arguments at the bottom to match yuour keypair, security_group, instance_tags, etc.**
 
-**In the meantime, feel free to open CreateInstance.py and change the arguments at the bottom to match yuour keypairk 
