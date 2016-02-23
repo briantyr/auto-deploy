@@ -2,25 +2,60 @@
 
 # CreateInstance.py
 #
-# Brian Taylor
+# This class was intended to demonstrate an exercise using the Python AWS SDK 
+# (boto), however it will probably be extended to do much more over time,
+# especially as I continue to test additional infrastructure.
+#
+# This class (CreateInstance) has some wrapper functions around the 'boto' module 
+# to make things seem more 'pythonic'.  However, the functionality is only
+# wrapped for certain actions, all of which are used for the main purpose of
+# this class, which is to demo the provisioning and configuration of a single
+# EC2 instance in AWS.  The configuration uses cloud-init with dynamic supplied
+# user data to use APT to update, install nginx, configure and symlink the sites
+# available virtualhost file into /etc/nginx/sites-enabled/.  It then builds a
+# static html page at the location nginx config is expecting, and outputs a 
+# simple <h1> message.
+#
+# This is object oriented and as such, may be expanded, reduced, built around,
+# inherited from, imported into another project, using basic principles of OOP.
+# Most importantly, the functions can be reused within the same project to
+# follow DRY coding principles.
 #
 #
-# This Class is a wrapper around the Python module, boto. Besides that module,
+# Besides using 
 # I addded some custom code for basic error checking on the arguments you pass
 # into the class.  I am using cloud-init to configure nginx and the webserver
 # configuration, however further down in the CreateInstance::run() function, you
 # could extend it to use Fabric / Paramiko to SSH into the instance.
 #
 # Requirements:
-#    I would recommend using a virtualenv if you don't want boto installed
-#    globally.
+#    - BASH in Linux or OS X (If unsure, run 'echo $SHELL' from command line. It
+#      should return '/bin/bash'.
+#    I would recommend using a virtualenv & virtualenvwrapper if you don't want 
+#    boto installed globally. (virtualenvwrapper is optional but gives you a
+#    great set of helper functions and shortcuts)
 #
-#    boto >=2.38 (pip install boto)
+#    (sudo pip install virtualenv virtualenvwrapper -U)
+#    
+#    Create virtualenv with virtualenvwrapper helper BASH function, then install
+#    boto within virtualenv.
+#
+#    Requires boto >=2.38
+#
+# Install instructions from BASH:
+#    Assuming virtualenv/virtualenvwrapper (otherwise you must install boto with
+#    pip as sudo)..
+#
+#    mkvirtualenv auto-deploy #auto-deploy is the name of your virtualenv
+#    (pip install boto -U)
 #    
 #    Add the following to your ~/.boto file (create it if it doesn't exist) to
 #    match your access key environment.
 #    
 #
+# Author: Brian Taylor
+# Feel free to contact me on github.  This file is contained in the github repo:
+# https://github.com/briantyr/auto-deploy
 
 import os
 import sys
@@ -62,6 +97,7 @@ class CreateInstance(object):
         This constructor populates the variables above.
         
         '''
+        self.conn = None
         
         for key in kwargs:
             if key.lower() == 'name':
@@ -108,44 +144,116 @@ class CreateInstance(object):
         self._validate_input()
         
         # Returns class boto.ec2.instance.Reservation object
-        # http://boto.cloudhackers.com/en/latest/ref/ec2.html#boto.ec2.instance.Reservation
+        # http://boto.cloudhackers.com/en/latest/ref/ec2.html#boto.ec2.instance.Reservation    
         self.reservation_id = self.conn.run_instances(image_id=self.ami, 
-                                                        key_name=self.key_pair, 
-                                                        security_groups=[self.security_group],
-                                                        instance_type=self.instance_type,
-                                                        user_data=self._inject_user_data()
-                                                        )
+                                                      key_name=self.key_pair, 
+                                                      security_groups=[self.security_group],
+                                                      instance_type=self.instance_type,
+                                                      user_data=self._inject_user_data()
+                                                      )
         
-        self.instance_id = self.reservation_id.instances[0].id
+        launched_instance = self.reservation_id.instances[0]
         
+        print "Provisioning '%s' EC2 Instance ID: '%s' in '%s', "\
+              "named '%s'...\n" % (str(launched_instance.instance_type), 
+                                  str(launched_instance.id),
+                                  str(launched_instance.region.name), 
+                                  str(self.ec2_tag_Name))
         
-        self._tag_instance()
+        self.wait_for_state_running(launched_instance)
         
-    def _tag_instance(self):
+        # Get all instances function call
+        # Pass in string or list of instance_id that we just launched to get the
+        # specific instance.
+        instances = self.get_all_instances(launched_instance.id)
+        if not instances:
+            print "WARNING: self.get_all_instances returned an empty list of"\
+                  " Instances."
+        for ec2 in instances:
+            if ec2.id == launched_instance.id:
+                self.tag_instance(ec2, "Name", self.ec2_tag_Name)
+                print "Successfully provisioned '{0}' and started new instance "\
+                      "'{1}' with a Public DNS of '{2}'.".format(ec2.tags['Name'],
+                                                                 ec2.id, 
+                                                                 ec2.public_dns_name)
+                
+            
+    def tag_instance(self, instance_obj, key, value):
         '''
         Added code to properly tag instances upon launching.
+        :arg1 boto.ec2.Instance object
+        :arg2 Key (e.g Name)
+        :arg3 value (e.g Web-01-dev)
+        
+        Times out after 60 seconds if the instance has not changed states.
         '''
-        reservations = self.conn.get_all_reservations()
-        for res in reservations:
-            instance = res.instances.pop() # list of instances by EC2 ID
-            # check instance_id against run_instances output
-            if instance.id == self.instance_id:
-                print "Provisioning '%s' EC2 Instance ID: '%s' in '%s', "\
-                      "named '%s'...\n" % (str(instance.instance_type), 
-                                          str(instance.id),
-                                          str(instance.region.name), 
-                                          str(self.ec2_tag_Name))
-                print "Waiting for instance to come up..."
-                while (instance.state != u'running') and \
-                      (instance.state != u'pending'):
-                    print "."
-                    sleep(1)
-                    #check to see if pending or running to add name tag.
-                    instance.update()
+        if isinstance(instance_obj, boto.ec2.instance.Instance):
+            print "Attempting to tag Instance: {0} with Key: {1}, Value: {2}".format\
+                  (instance_obj.id, key, value)
+            if instance_obj.state is not u'running':
+                if not self.wait_for_state_running(instance_obj):
+                    raise Exception("Timeout waiting for Instance running: {0}".format(\
+                        instance_obj.id))
+           
+            instance_obj.add_tag(key, value)
+        else:
+            raise NotImplementedError("instance_obj is not of type "\
+                                      "boto.ec2.instance.Instance")
                     
-                instance.add_tag('Name', self.ec2_tag_Name)
-                    
-                      
+    def get_all_instances(self, instance_ids=None):
+        '''
+        CreateInstance.get_all_instances(instance_ids)
+        Returns a list of type <class 'boto.ec2.instance.Instance'>, so each
+        element in the list is a boto 'Instance' object representing a unique
+        EC2 instance. (Returns started and stopped instances).
+        
+        If self.conn has not been assigned by boto, return empty list.
+        
+        Examples:
+        - Retrieve only instances matching an EC2 instance_id of 'i-3255158'.
+          (Passing in string)
+          CreateInstance.get_all_instances(instance_ids='i-3255158')
+          (Passing in list)
+          CreateInstance.get_all_instances(instance_ids=['i-3255158'])
+        '''
+        # If self.conn is None, return empty list
+        if not self.conn:
+            print "The self.conn variable is set to None! Can't get instances."
+            return []
+        
+        # Check if passed in argument is a string, and if so, make into a list.
+        if instance_ids and not isinstance(instance_ids, list):
+            instance_ids = list().append(instance_ids)
+            
+        return self.conn.get_only_instances(instance_ids=instance_ids)
+    
+    def wait_for_state_running(self, instance_obj, timeout=180):
+        '''
+        Waits for an Instance object to be started.  Timeout is 3 minutes, but
+        can be adjusted with 'timeout' argument.
+        
+        :arg1: boto.ec2.instance.Instance object
+        :arg2: timeout in seconds (optional: default is 180 seconds)
+        :rval: Returns True if object started
+        '''
+        if not isinstance(instance_obj, boto.ec2.instance.Instance):
+            raise NotImplementedError("Error: instance_obj is not a boto Instance object.")
+        print "Waiting for Instance ID '{0}' to be in 'running' state.."\
+              .format(instance_obj.id)
+        increment = 0
+        while instance_obj.state != u'running':
+            sleep(1)
+            increment += 1
+            if increment >= timeout:
+                print "wait_for_state_running::Error: Instance failed to run"\
+                      " after {0} seconds.  Exiting..".format(timeout)
+                # Exit with POSIX error code to handle in BASH, if necessary.
+                sys.exit(1)
+            instance_obj.update()
+        
+        print "Instance: {0} successfully started.".format(instance_obj.id)
+        return True
+            
     def get_tag_name(self):
         return self.ec2_tag_Name
     
@@ -176,11 +284,13 @@ class CreateInstance(object):
         return bootstrap
 
 if __name__ == "__main__":
-    
-    # Instantiate instance with arguments here.
-    instance = CreateInstance(Name='Web-01-Dev', Region='us-east-1',
-                              Type='t2.micro', AMI='ami-20d3fc4a',
-                              key_pair='brian-test',
-                              security_group='webserver-with-ssh')
-    # Call the CreateInstance.run() function to kick everything off.
-    instance.run()
+    try:
+        # Instantiate instance with arguments here.
+        instance = CreateInstance(Name='Web-01-Dev', Region='us-east-1',
+                                  Type='t2.micro', AMI='ami-20d3fc4a',
+                                  key_pair='brian-test',
+                                  security_group='webserver-with-ssh')
+        # Call the CreateInstance.run() function to kick everything off.
+        instance.run()
+    except Exception as error:
+        raise
