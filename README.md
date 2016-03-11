@@ -97,40 +97,40 @@ _**OS X (El Capitan) virtualenvwrapper installation issues**_
 
 El Capitan has some problems with the Python 'six' module when installing virtualenvwrapper but you can easily fix it by runninng the following commands as sudo, then continue on:
 
-    ```shell
+    
     sudo pip install --upgrade pip
     sudo pip install --upgrade virtualenv
     sudo pip install pbr
     sudo pip install —no-deps stevedore
     sudo pip install —no-deps virtualenvwrapper
-    ```
+    
     
  
 **Ubuntu 14.04 and other linux distributions**
 
-     ```shell
+     
      sudo pip install --upgrade pip
      sudo pip install --upgrade virtualenv virtualenvwrapper
-     ```
+     
      
      
 
 **Now on both OS X or Ubuntu (and probably Windows), finish the installation**
 
     **AS YOUR REGULAR USER**
-    ```shell
+    
     cd ~/
     git clone https://github.com/briantyr/auto-deploy.git
     cd auto-deploy
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bash_profile
     source ~/.bash_profile
-    ```
+    
 
 _**Now you should have access to new shell functions, such as mvirtualenv, workon, etc.  We're going to create a unique virtualenv using one of the virtualenvwrapper helper functions to make a new virtualenv and use our packages in requirement.txt to install to it.**_
 
-    ```shell
+
     mkvirtualenv -r requirements.txt auto-deploy
-    ```
+    
 
 **(Names your virtualenv auto-deploy in ~/.virtualenv/auto-deploy ... rename as you feel necessary in your mkvirtualenv call)**
 
@@ -157,5 +157,5 @@ Type: **pip list** and you should receive onyl a mimimal amount of packages back
 #### AUTHOR
 
     - Brian Taylor
-    - btaylormd at gmail dot com
+    btaylormd at gmail dot com
 
