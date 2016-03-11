@@ -173,9 +173,15 @@ class CreateInstance(object):
             if ec2.id == launched_instance.id:
                 self.tag_instance(ec2, "Name", self.ec2_tag_Name)
                 print "Successfully provisioned '{0}' and started new instance "\
-                      "'{1}' with a Public DNS of '{2}'.".format(ec2.tags['Name'],
+                      "'{1}' with a Public DNS of '{2}'.\n\n".format(ec2.tags['Name'],
                                                                  ec2.id, 
                                                                  ec2.public_dns_name)
+                print "Try navigating to http://{0} to see if the server came "\
+                      "up and nginx properly displays 'Automation for the People!'\n\n "\
+                      "Keep in mind occasionally Ubuntu updates take a while and "\
+                      "same with nginx installation.. It should be available in "\
+                      "under 2 minutes.  If not, SSH in and troubleshoot.\n"\
+                      .format(ec2.public_dns_name)
                 
             
     def tag_instance(self, instance_obj, key, value):
