@@ -65,7 +65,7 @@ import boto.ec2
 
 
 class CreateInstance(object):
-    '''
+    """
     CreateInstance
     
     Class to instantiate, provision, and configure a single EC2 instance using
@@ -76,7 +76,7 @@ class CreateInstance(object):
     Designed to create an EC2 instance in AWS and take advantage of cloud-init
     by supplying user-data.
     
-    '''
+    """
     
     # These variables are passed in when this class is instantiated.  Changing
     # them here will have no effect, they are only here for reference.
@@ -88,7 +88,7 @@ class CreateInstance(object):
     security_group = None
     
     def __init__(self, *args, **kwargs):
-        '''
+        """
         __init__(self, *args, **kwargs):
         
         Accepts a bunch of named parameters and automatically lowercases them
@@ -96,7 +96,7 @@ class CreateInstance(object):
         
         This constructor populates the variables above.
         
-        '''
+        """
         self.conn = None
         
         for key in kwargs:
@@ -115,10 +115,10 @@ class CreateInstance(object):
                 
                 
     def _validate_input(self):
-        '''
-        Checks that the variables passed into the class are legit and validates
+        """
+        Checks that the variables passed into the class are real and validates
         what it can.
-        '''
+        """
         # Check for a valid EC2 region, else raise an exception.
         if not boto.ec2.get_region(self.region):
             raise NotImplementedError("ERROR: The region specified is invalid: '%s'" % 
@@ -140,7 +140,12 @@ class CreateInstance(object):
         self.sg = self.create_security_group(self.security_group)
         
     def run(self):
+        """
+        from createinstance.createinstance import CreateInstance
+        CreateInstance().run() 
         
+        Main Program Logic to connect return values.
+        """
         self._validate_input()
         
         # Returns class boto.ec2.instance.Reservation object
@@ -173,20 +178,26 @@ class CreateInstance(object):
             if ec2.id == launched_instance.id:
                 self.tag_instance(ec2, "Name", self.ec2_tag_Name)
                 print "Successfully provisioned '{0}' and started new instance "\
-                      "'{1}' with a Public DNS of '{2}'.".format(ec2.tags['Name'],
+                      "'{1}' with a Public DNS of '{2}'.\n\n".format(ec2.tags['Name'],
                                                                  ec2.id, 
                                                                  ec2.public_dns_name)
+                print "Try navigating to http://{0} to see if the server came "\
+                      "up and nginx properly displays 'Automation for the People!'\n\n "\
+                      "Keep in mind occasionally Ubuntu updates take a while and "\
+                      "same with nginx installation.. It should be available in "\
+                      "under 2 minutes.  If not, SSH in and troubleshoot.\n"\
+                      .format(ec2.public_dns_name)
                 
             
     def tag_instance(self, instance_obj, key, value):
-        '''
+        """
         Added code to properly tag instances upon launching.
         :arg1 boto.ec2.Instance object
         :arg2 Key (e.g Name)
         :arg3 value (e.g Web-01-dev)
         
         Times out after 60 seconds if the instance has not changed states.
-        '''
+        """
         if isinstance(instance_obj, boto.ec2.instance.Instance):
             print "Attempting to tag Instance: {0} with Key: {1}, Value: {2}".format\
                   (instance_obj.id, key, value)
@@ -201,7 +212,7 @@ class CreateInstance(object):
                                       "boto.ec2.instance.Instance")
                     
     def get_all_instances(self, instance_ids=None):
-        '''
+        """
         CreateInstance.get_all_instances(instance_ids)
         Returns a list of type <class 'boto.ec2.instance.Instance'>, so each
         element in the list is a boto 'Instance' object representing a unique
@@ -215,7 +226,7 @@ class CreateInstance(object):
           CreateInstance.get_all_instances(instance_ids='i-3255158')
           (Passing in list)
           CreateInstance.get_all_instances(instance_ids=['i-3255158'])
-        '''
+        """
         # If self.conn is None, return empty list
         if not self.conn:
             print "The self.conn variable is set to None! Can't get instances."
@@ -228,14 +239,13 @@ class CreateInstance(object):
         return self.conn.get_only_instances(instance_ids=instance_ids)
     
     def wait_for_state_running(self, instance_obj, timeout=180):
-        '''
-        Waits for an Instance object to be started.  Timeout is 3 minutes, but
+        """Waits for an Instance object to be started.  Timeout is 3 minutes, but
         can be adjusted with 'timeout' argument.
         
         :arg1: boto.ec2.instance.Instance object
         :arg2: timeout in seconds (optional: default is 180 seconds)
-        :rval: Returns True if object started
-        '''
+        :rval: Returns True if object started"""
+        
         if not isinstance(instance_obj, boto.ec2.instance.Instance):
             raise NotImplementedError("Error: instance_obj is not a boto Instance object.")
         print "Waiting for Instance ID '{0}' to be in 'running' state.."\
@@ -255,17 +265,19 @@ class CreateInstance(object):
         return True
             
     def get_tag_name(self):
+        """ return ec2_tag_Name"""
         return self.ec2_tag_Name
     
     def create_security_group(self, name):
-        '''
+        """
         Create EC2 Security Group called "name".  By default, allows port 80 and
         22 open to the public.  If the group already exists, it will be used
         and no new group is created.
         
         
         args: name -> string
-        '''
+        :rval: self.conn.get_all_security_groups()[int]
+        """
         for sg in self.conn.get_all_security_groups():
             if sg.name.lower() == name.lower():
                 return sg

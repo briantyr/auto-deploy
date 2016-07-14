@@ -3,7 +3,7 @@
 
 #####**Description:**
 This class was intended to demonstrate an exercise using the Python AWS SDK 
-(boto), however it will probably be extended to do much more over time,
+(boto) for personal learning purposes, however it will probably be extended eventually to demosntrate CloudFormation template generators as well as to create a dynamic inventory system similaar to Ansible,
 especially as I continue to test additional infrastructure changes with the SDK, implement code coverage unit tests as well as infrastructure tests, hopefully all in Python.
 
 This class (CreateInstance) has some wrapper functions around the 'boto' module 
@@ -97,16 +97,23 @@ _**OS X (El Capitan) virtualenvwrapper installation issues**_
 
 El Capitan has some problems with the Python 'six' module when installing virtualenvwrapper but you can easily fix it by runninng the following commands as sudo, then continue on:
 
+    
     sudo pip install --upgrade pip
     sudo pip install --upgrade virtualenv
     sudo pip install pbr
     sudo pip install —no-deps stevedore
     sudo pip install —no-deps virtualenvwrapper
+    
+    
  
 **Ubuntu 14.04 and other linux distributions**
 
+     
      sudo pip install --upgrade pip
      sudo pip install --upgrade virtualenv virtualenvwrapper
+     
+     
+     
 
 **Now on both OS X or Ubuntu (and probably Windows), finish the installation**
 
@@ -117,10 +124,13 @@ El Capitan has some problems with the Python 'six' module when installing virtua
     cd auto-deploy
     echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bash_profile
     source ~/.bash_profile
+    
 
 _**Now you should have access to new shell functions, such as mvirtualenv, workon, etc.  We're going to create a unique virtualenv using one of the virtualenvwrapper helper functions to make a new virtualenv and use our packages in requirement.txt to install to it.**_
 
+
     mkvirtualenv -r requirements.txt auto-deploy
+    
 
 **(Names your virtualenv auto-deploy in ~/.virtualenv/auto-deploy ... rename as you feel necessary in your mkvirtualenv call)**
 
@@ -133,16 +143,19 @@ Ensure you're working on the 'auto-deploy' virtualenv:
 
 Type: **pip list** and you should receive onyl a mimimal amount of packages back, including boto, that looks something like below.  If so, are good to execute the Python code in CreateInstance.py, but you may want to change the keyword arguments athe botttom.
 
-    (auto-deploy) dev:stelli-project btaylor$ pip list
+    (auto-deploy) dev:auto-deploy btaylor$ pip list
     boto (2.39.0)
     pip (8.0.2)
     setuptools (20.0)
     wheel (0.29.0)
     chmod +x CreateInstance.py
-    (modify CreateInstance.py run arguments)
+    (modify CreateInstance(args) arguments in the python script such as SSH keypair, SG, tags, etc.)
     ./CreateInstance.py
     
-#### **More to come on installation, newer code, and running later.  Contact me if anything is broken.**
+#### **When I get a chance, I'll add an .ini file you can configure instead of modifying the class instantiation args**
 
-**In the meantime, feel free to open CreateInstance.py and change the arguments at the bottom to match yuour keypair, security_group, instance_tags, etc.**
+#### AUTHOR
+
+    - Brian Taylor
+    btaylormd at gmail dot com
 
